@@ -2,7 +2,8 @@ import cv2
 import time
 from emailing import send_email
 import glob
-# commit: get list of obj frames and save only middle one Sec37
+import os
+# commit: connected main and emailing modules Sec37
 
 video=cv2.VideoCapture(0)
 time.sleep(1) # give cam time to load
@@ -11,6 +12,11 @@ first_frame=None # get first frame and compare rest against the first
 status_list=[] # to track obj detection status
 count=1
 cap_img=[]
+
+def clean_folder(): # to clean up images folder
+    images=glob.glob('images/*.png')
+    for image in images:
+        os.remove(image)
 
 while True:
     status=0 # to track obj moving out of frame
@@ -53,8 +59,13 @@ while True:
     if status_list[0]==1 and status_list[1]==0: #ie, ob exited frame so send mail
         idx=int(len(cap_img)/2)-1 # get mid index
         cv2.imwrite(filename='images/image.png',img=cap_img[idx]) # save the middle frame from list to file
+
+        # this freezes the feed while mail is being sent!!!
+        # need threading to fix the freezing issue!!!
+        send_email('images/image.png') 
+
         cap_img=[] # clear the list
-        # send_email('images/image.png')
+        clean_folder() # clean images folder
 
     print(status_list)
 
