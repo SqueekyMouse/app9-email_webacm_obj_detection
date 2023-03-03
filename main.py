@@ -1,30 +1,31 @@
 import cv2
 import time
 from emailing import send_email
-# commit: call email fn when obj exit frame Sec36
+import glob
+# commit: got image of frame with obj Sec37
 
 video=cv2.VideoCapture(0)
 time.sleep(1) # give cam time to load
 
-# get first frame and compare rest against the first
-first_frame=None
-status_list=[]
+first_frame=None # get first frame and compare rest against the first
+status_list=[] # to track obj detection status
+count=1
 
 while True:
     status=0 # to track obj moving out of frame
-    check,frame=video.read() # captures an image
-    gray_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY) # convert to greyscale, no need for bgr complexity for comparing frames algo to cnv image
-    gray_frame_gau=cv2.GaussianBlur(gray_frame,(21,21),0) # blur the image to remove the noise, dont ned that much precision
+    check,frame=video.read() 
+    gray_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY) 
+    gray_frame_gau=cv2.GaussianBlur(gray_frame,(21,21),0)
     #cv2.imshow('my video',gray_frame_gau) #show grey blur img
 
-    if first_frame is None: # get first frame and compare rest against the first
+    if first_frame is None: # get first frame
         first_frame=gray_frame_gau
 
     delta_frame=cv2.absdiff(first_frame,gray_frame_gau) #get the difference matrix
     # cv2.imshow('my video',delta_frame) #show the delta frame
 
-    # cnv del to black and white, ie, remove more noise, #30 or more px to be set as 255
-    thresh_frame=cv2.threshold(delta_frame,60,255,cv2.THRESH_BINARY)[1] #60 looks good
+    # cnv delta to black and white, ie 30 or more px to be set as 255
+    thresh_frame=cv2.threshold(src=delta_frame,thresh=60,maxval=255,type=cv2.THRESH_BINARY)[1] #60 looks good
     # cv2.imshow('my video',thresh_frame) 
 
     dil_frame=cv2.dilate(thresh_frame,None,iterations=2) # remove more noise, more iter more processing
@@ -33,9 +34,7 @@ while True:
     # to add frame, detect contours around white areas
     contours,check=cv2.findContours(dil_frame,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
-    # to filter out smaller insignificant contours
-    for contour in contours:
-        # if cv2.contourArea(contour)<10000: # skip small objects
+    for contour in contours: # to filter out smaller insignificant contours
         if cv2.contourArea(contour)<5000: # skip small objects, 5k is better
             continue
         # this is where we detect a suitable object from cam
@@ -44,7 +43,13 @@ while True:
 
         if rectangle.any(): # obj detected, update status
             status=1
-            
+            #save frame with objects as image
+            cv2.imwrite(filename=f'images/{count}.png',img=frame) 
+            count+=1
+            # get the middle img from the set of images saved
+            all_images=glob.glob('images/*.png')
+            idx=int(len(all_images)/2)-1 # get middle index
+            image_with_obj=all_images[idx] # got img with obj to email
 
     status_list.append(status) # list of obj detection statuses
     status_list=status_list[-2:] # status 1 to 0 means obj exited frame

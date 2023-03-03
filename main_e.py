@@ -42,14 +42,13 @@ while True:
         x,y,w,h=cv2.boundingRect(contour) # extract dimensions of obj
         rectangle=cv2.rectangle(img=frame,pt1=(x,y),pt2=(x+w,y+h),color=(0,255,0),thickness=3) # draw frame on frame
 
-        if rectangle.any(): # send email since the rect is drawn denoting obj
+        if rectangle.any(): # obj detected, update status
             status=1
-            
 
-    status_list.append(status)
-    status_list=status_list[-2:]
+    status_list.append(status) # list of obj detection statuses
+    status_list=status_list[-2:] # status 1 to 0 means obj exited frame
 
-    if status_list[0]==1 and status_list[1]==0: #ie, ob exited frame
+    if status_list[0]==1 and status_list[1]==0: #ie, ob exited frame so send mail
         send_email()
 
     print(status_list)
