@@ -52,9 +52,9 @@ while True:
 
     if status_list[0]==1 and status_list[1]==0: #ie, ob exited frame so send mail
         idx=int(len(cap_img)/2)-1 # get mid index
-        cv2.imwrite(filename='images/image.png',img=cap_img[idx]) # save the middle frame from list to file
+        cv2.imwrite(filename='images/q.png',img=cap_img[idx]) # save the middle frame from list to file
         cap_img=[] # clear the list
-        # send_email('images/image.png')
+        send_email()
 
     print(status_list)
 
