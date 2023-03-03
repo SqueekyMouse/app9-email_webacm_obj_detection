@@ -9,6 +9,7 @@ PASSWORD=os.getenv('APP_M_PASSWORD')
 RECEIVER='appuser565@gmail.com'
 
 def send_email(image_path):
+    print('send_email function started') # just to track the threads
     email_message=EmailMessage() # to create email obj, its basically a dict
     email_message['Subject']='New customer showed up!'
     email_message.set_content('Hey, we just saw a new customer!')
@@ -25,6 +26,7 @@ def send_email(image_path):
     gmail.login(SENDER,PASSWORD)
     gmail.sendmail(SENDER,RECEIVER,email_message.as_string())
     gmail.quit()
+    print('send_email function ended') # just to track the threads
 
 if __name__=='__main__':
     send_email(image_path='images/image.png')
