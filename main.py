@@ -1,14 +1,17 @@
 import cv2
 import time
-# commit: contours: detect filter get bound draw rect Sec36
+from emailing import send_email
+# commit: call email fn when obj exit frame Sec36
 
 video=cv2.VideoCapture(0)
 time.sleep(1) # give cam time to load
 
 # get first frame and compare rest against the first
 first_frame=None
+status_list=[]
 
 while True:
+    status=0 # to track obj moving out of frame
     check,frame=video.read() # captures an image
     gray_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY) # convert to greyscale, no need for bgr complexity for comparing frames algo to cnv image
     gray_frame_gau=cv2.GaussianBlur(gray_frame,(21,21),0) # blur the image to remove the noise, dont ned that much precision
@@ -35,8 +38,21 @@ while True:
         # if cv2.contourArea(contour)<10000: # skip small objects
         if cv2.contourArea(contour)<5000: # skip small objects, 5k is better
             continue
+        # this is where we detect a suitable object from cam
         x,y,w,h=cv2.boundingRect(contour) # extract dimensions of obj
-        cv2.rectangle(img=frame,pt1=(x,y),pt2=(x+w,y+h),color=(0,255,0),thickness=3) # draw frame on frame
+        rectangle=cv2.rectangle(img=frame,pt1=(x,y),pt2=(x+w,y+h),color=(0,255,0),thickness=3) # draw frame on frame
+
+        if rectangle.any(): # send email since the rect is drawn denoting obj
+            status=1
+            
+
+    status_list.append(status)
+    status_list=status_list[-2:]
+
+    if status_list[0]==1 and status_list[1]==0: #ie, ob exited frame
+        send_email()
+
+    print(status_list)
 
     cv2.imshow('Video',frame)
     key=cv2.waitKey(1) # basically creates a keyboard key obj
